@@ -1,4 +1,4 @@
-namespace aoc2_1;
+namespace aoc2_2;
 
 public enum Direction {
     Forward,

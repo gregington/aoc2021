@@ -2,7 +2,7 @@
 using System.Reactive;
 using System.Reactive.Linq;
 
-namespace aoc2_1;
+namespace aoc2_2;
 class Program {
     static void Main(string[] args) {
         var commands = Commands().ToObservable();
