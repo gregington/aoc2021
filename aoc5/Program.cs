@@ -12,7 +12,12 @@ class Program {
         var horizontalAndVerticalLineSegments = lineSegments
             .Where(x => x.IsHorizontal || x.IsVertical);
 
-        var pointFrequency = horizontalAndVerticalLineSegments
+        Console.WriteLine($"Horizonal/Vertical dangerous points: {DangerousPoints(horizontalAndVerticalLineSegments)}");
+        Console.WriteLine($"Dangerous points: {DangerousPoints(lineSegments)}");
+    }
+
+    static int DangerousPoints(IEnumerable<LineSegment> lineSegments) {
+        var pointFrequency = lineSegments
             .SelectMany(x => x.Points())
             .Aggregate(ImmutableDictionary<Point, int>.Empty, (d, p) => {
                 if (d.ContainsKey(p)) {
@@ -22,12 +27,10 @@ class Program {
                 return d.Add(p, 1);
             });            
 
-        var dangerousPoints = pointFrequency
+        return pointFrequency
             .Where(kvp => kvp.Value > 1)
-            .Select(kvp => kvp.Key);
-
-        Console.WriteLine($"Num points: {pointFrequency.Count()}");
-        Console.WriteLine($"Num dangerous points: {dangerousPoints.Count()}");
+            .Select(kvp => kvp.Key)
+            .Count();
     }
 
     static IEnumerable<LineSegment> ReadLineSegments() {
