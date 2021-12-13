@@ -8,18 +8,34 @@ class Program {
     static void Main(string[] args) {
         var positions = ReadPositions();
 
-        var fuelCosts = Enumerable.Range(0, positions.Length)
-            .Select(p => (Position: p, Cost: CalculateCost(p, positions)));
+        var fuelCostsConstant = Enumerable.Range(0, positions.Length)
+            .Select(p => (Position: p, Cost: CalculateConstantCost(p, positions)));
 
-        var (minPos, minCost) = fuelCosts.MinBy(x => x.Cost);
+        var (minConstantCostPos, minConstantCost) = fuelCostsConstant.MinBy(x => x.Cost);
 
-        Console.WriteLine($"Min Pos: {minPos}, Min Cost: {minCost}");
+        Console.WriteLine($"Min Constant Cost Pos: {minConstantCostPos}, Min Constant Cost: {minConstantCost}");
+
+        var fuelCostsVariable = Enumerable.Range(0, positions.Length)
+            .Select(p => (Position: p, Cost: CalculateVariableCost(p, positions)));
+
+        var (minVariableCostPos, minVariableCost) = fuelCostsVariable.MinBy(x => x.Cost);
+
+        Console.WriteLine($"Min Variable Cost Pos: {minVariableCostPos}, Min Variable Cost: {minVariableCost}");
     }
 
-    private static int CalculateCost(int idx, ImmutableArray<int> initialPositions) =>
+    private static int CalculateConstantCost(int idx, ImmutableArray<int> initialPositions) =>
         Enumerable.Range(0, initialPositions.Length)
             .Zip(initialPositions, (a, b) => (Index: a, NumCrabs: b))
             .Select(x => x.NumCrabs * (Math.Abs(idx - x.Index)))
+            .Sum();
+
+    private static int CalculateVariableCost(int idx, ImmutableArray<int> initialPositions) =>
+        Enumerable.Range(0, initialPositions.Length)
+            .Zip(initialPositions, (a, b) => (Index: a, NumCrabs: b))
+            .Select(x => {
+                var dist = Math.Abs(idx - x.Index);
+                return x.NumCrabs * dist * (dist + 1) / 2;
+            })
             .Sum();
 
     private static ImmutableArray<int> ReadPositions() {
@@ -30,6 +46,5 @@ class Program {
 
         return crabPositions.Aggregate(Enumerable.Repeat(0, maxPosition + 1).ToImmutableArray(),
             (p, i) => p.SetItem(i, p[i] + 1));
-
     }
 }
