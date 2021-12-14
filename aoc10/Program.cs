@@ -15,7 +15,58 @@ class Program {
         var corruptScores = firstCorruptChar.Select(ScoreCorruptChar);
         var totalScore = corruptScores.Sum();
 
-        Console.WriteLine($"Score: {totalScore}");
+        Console.WriteLine($"Total Corrupt Score: {totalScore}");
+
+        var incompleteLines = lines.Where(x => !corruptLines.Select(y => y.Line).Contains(x));
+
+        var completions = incompleteLines.Select(x => (Line: x, Completion: Completion(x)));
+
+        var completionScores = completions.Select(x => ScoreCompletion(x.Completion));
+
+        var sortedScores = completionScores.OrderBy(s => s).ToImmutableArray();
+
+        var middleScore = sortedScores[sortedScores.Length / 2];
+
+        Console.WriteLine($"Middle Completion Score: {middleScore}");
+    }
+
+    static long ScoreCompletion(string completion) =>
+        completion.Select(c => c)
+            .Aggregate(0L, (s, c) => s * 5 + CompletionCharScore(c));
+    
+    static long CompletionCharScore(char c) {
+        switch(c) {
+            case ')':
+                return 1;
+            case ']':
+                return 2;
+            case '}':
+                return 3;
+            case '>':
+                return 4;
+            default:
+                throw new ArgumentException($"Unexpected char {c}");
+        }
+    }
+
+    static string Completion(string line) {
+        var remainingStack =  Completion(line.Select(c => c).GetEnumerator(), ImmutableArray<char>.Empty);
+        return string.Join("", remainingStack.Reverse().Select(ClosingFor));
+    }
+
+    static ImmutableArray<char> Completion(IEnumerator<char> chars, ImmutableArray<char> stack) {
+        if (!chars.MoveNext()) {
+            return stack;
+        }
+        var c = chars.Current;
+
+        if (IsOpening(c)) {
+            stack = stack.Add(c);
+        } else {
+            stack = stack.RemoveAt(stack.Length - 1);
+        }
+
+        return Completion(chars, stack);
     }
 
     static int ScoreCorruptChar(char c) {
