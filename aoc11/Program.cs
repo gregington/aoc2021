@@ -7,16 +7,40 @@ namespace aoc11;
 
 class Program {
     static void Main(string[] args) {
-        var adj = Adjacent(new Point(1, 1), 3, 3);
-        var energyLevels = ReadInput();
+        var initialEnergyLevels = ReadInput();
+        var steps = 100;
+        var (energyLevels, flashCount) = ExecuteSteps(initialEnergyLevels, 100);
+        PrintEnergyLevels(energyLevels);
+        Console.WriteLine($"Steps: {steps}, Flashes: {flashCount}");
+
+        var firstSimultaneousFlash = FindFirstSimultaneousFlash(initialEnergyLevels);
+        Console.WriteLine($"First simultaneous flash at step {firstSimultaneousFlash}");
+    }
+
+    static int FindFirstSimultaneousFlash(ImmutableArray<ImmutableArray<int>> energyLevels) {
+        var i = 0;
+        do {
+            i++;
+            (energyLevels, _) = PerformStep(energyLevels);
+        } while (!AllFlashed(energyLevels));
+        return i;
+    }
+
+    static (ImmutableArray<ImmutableArray<int>> EnergyLevels, int NumFlashed) ExecuteSteps(ImmutableArray<ImmutableArray<int>> energyLevels, int steps) {
         var flashCount = 0;
-        int steps = 100;
+        var firstSimultaneousFlash = -1;
         for (var i = 0 ; i < steps; i++) {
             (energyLevels, var flashes) = PerformStep(energyLevels);
             flashCount += flashes;
+            if (AllFlashed(energyLevels)) {
+                firstSimultaneousFlash = i + 1;
+            }
         }
-        PrintEnergyLevels(energyLevels);
-        Console.WriteLine($"Steps: {steps}, Flashes: {flashCount}");
+        return (energyLevels, flashCount);
+    } 
+
+    static bool AllFlashed(ImmutableArray<ImmutableArray<int>> energyLevels) {
+        return energyLevels.SelectMany(x => x).All(x => x == 0);
     }
 
     static (ImmutableArray<ImmutableArray<int>> EnergyLevels, int NumFlashed) PerformStep(ImmutableArray<ImmutableArray<int>> energyLevels) {
