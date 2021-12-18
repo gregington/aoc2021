@@ -5,15 +5,44 @@ namespace aoc12;
 class Program {
     static void Main(string[] args) {
         var caves = ReadData();
-        var pathsToEnd = FindPathsToEnd(caves);
-        Console.WriteLine($"{pathsToEnd.Count()} paths");
+        var smallCavesOnce = FindPathsSmallCavesOnce(caves);
+        Console.WriteLine($"Numer of paths, small caves once: {smallCavesOnce.Count()} paths");
+
+        var singleSmallCaveTwice = FindPathsSingleSmallCaveTwice(caves);
+        Console.WriteLine($"Numer of paths, single small cave twice: {singleSmallCaveTwice.Count()} paths");
     }
 
-    static ImmutableArray<ImmutableArray<string>> FindPathsToEnd(ImmutableDictionary<string, ImmutableHashSet<string>> caves) {
-        return FindPathsToEnd(caves, "start", ImmutableArray<string>.Empty, ImmutableArray<ImmutableArray<string>>.Empty);
+    static ImmutableArray<ImmutableArray<string>> FindPathsSingleSmallCaveTwice(ImmutableDictionary<string, ImmutableHashSet<string>> caves) {
+        return FindPathsSingleSmallCaveTwice(caves, "start", ImmutableArray<string>.Empty, ImmutableArray<ImmutableArray<string>>.Empty);
     }
 
-    static ImmutableArray<ImmutableArray<string>> FindPathsToEnd(ImmutableDictionary<string, ImmutableHashSet<string>> caves, string currentCave,
+    static ImmutableArray<ImmutableArray<string>> FindPathsSingleSmallCaveTwice(ImmutableDictionary<string, ImmutableHashSet<string>> caves, string currentCave,
+        ImmutableArray<string> path, ImmutableArray<ImmutableArray<string>> pathsToEnd) {
+            var newPath = path.Add(currentCave);
+            if (currentCave == "end") {
+                return pathsToEnd.Add(newPath);
+            }
+            if (currentCave == "start" && path.Contains("start")) {
+                return pathsToEnd;
+            }
+            var numSmallCaveVisits = newPath.Where(IsSmall)
+                .GroupBy(x => x)
+                .ToImmutableDictionary(g => g.Key, g => g.Count());
+            if (numSmallCaveVisits.Any(x => x.Value > 2)
+                || numSmallCaveVisits.Where(kvp => kvp.Value > 1).Count() > 1) {
+                return pathsToEnd;
+            }
+            foreach(var nextCave in caves[currentCave]) {
+                pathsToEnd = FindPathsSingleSmallCaveTwice(caves, nextCave, newPath, pathsToEnd);
+            }
+            return pathsToEnd;
+    }
+
+    static ImmutableArray<ImmutableArray<string>> FindPathsSmallCavesOnce(ImmutableDictionary<string, ImmutableHashSet<string>> caves) {
+        return FindPathsSmallCavesOnce(caves, "start", ImmutableArray<string>.Empty, ImmutableArray<ImmutableArray<string>>.Empty);
+    }
+
+    static ImmutableArray<ImmutableArray<string>> FindPathsSmallCavesOnce(ImmutableDictionary<string, ImmutableHashSet<string>> caves, string currentCave,
         ImmutableArray<string> path, ImmutableArray<ImmutableArray<string>> pathsToEnd) {
             var newPath = path.Add(currentCave);
             if (currentCave == "end") {
@@ -23,7 +52,7 @@ class Program {
                 return pathsToEnd;
             }
             foreach(var nextCave in caves[currentCave]) {
-                pathsToEnd = FindPathsToEnd(caves, nextCave, newPath, pathsToEnd);
+                pathsToEnd = FindPathsSmallCavesOnce(caves, nextCave, newPath, pathsToEnd);
             }
             return pathsToEnd;
     }
