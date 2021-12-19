@@ -7,13 +7,10 @@ namespace aoc15;
 class Program {
     static void Main(string[] args) {
         var riskLevels = ReadData();
-//        PrintRiskLevels(riskLevels);
         var node = FindPath(riskLevels);
         Console.WriteLine($"Min risk: {node.Value.Risk}");
 
         var expandedRiskLevels = ExpandRiskLevels(riskLevels);
-//        Console.WriteLine();
-//        PrintRiskLevels(expandedRiskLevels);
         var expandedNode = FindPath(expandedRiskLevels);
         Console.WriteLine($"Min expanded risk: {expandedNode.Value.Risk}");
     }
