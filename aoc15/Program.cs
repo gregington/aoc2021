@@ -1,25 +1,36 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 
 namespace aoc15;
 class Program {
     static void Main(string[] args) {
         var riskLevels = ReadData();
-        var path = FindPath(riskLevels);
-        Console.WriteLine($"Min risk: {path.Value.Risk}");
+//        PrintRiskLevels(riskLevels);
+        var node = FindPath(riskLevels);
+        Console.WriteLine($"Min risk: {node.Value.Risk}");
+
+        var expandedRiskLevels = ExpandRiskLevels(riskLevels);
+//        Console.WriteLine();
+//        PrintRiskLevels(expandedRiskLevels);
+        var expandedNode = FindPath(expandedRiskLevels);
+        Console.WriteLine($"Min expanded risk: {expandedNode.Value.Risk}");
     }
 
     static Node? FindPath(ImmutableArray<ImmutableArray<int>> riskLevels) {
         var dest = new Point(riskLevels.Length - 1, riskLevels[0].Length - 1);
 
         var risks = Enumerable.Range(0, riskLevels.Length)
-            .SelectMany(y => Enumerable.Range(0, riskLevels[0].Length).Select(x => new Point(x, y)))
-            .ToDictionary(p => p, _ => int.MaxValue);
+            .Select(y => {
+                var arr = new int[riskLevels[0].Length];
+                Array.Fill(arr, int.MaxValue);
+                return arr;
+            }).ToArray();
 
         var priorityQueue = new PriorityQueue<Node, int>();
 
-        var startNode = new Node(new Point(0, 0), ImmutableArray.Create<Point>().Add(new Point(0, 0)), 0);
+        var startNode = new Node(new Point(0, 0), 0);
         priorityQueue.Enqueue(startNode, 0);
 
         while (priorityQueue.Count > 0) {
@@ -28,22 +39,21 @@ class Program {
                 return node;
             }
 
-            if (node.Risk > risks[node.Point]) {
+            if (node.Risk > risks[node.Point.Y][node.Point.X]) {
                 continue;
             }
 
-            risks[node.Point] = node.Risk;
-
             var adjacent = Adjacent(node.Point, dest.X, dest.Y)
                 .Select(a => node.MoveTo(a, riskLevels[a.Y][a.X]))
-                .Where(x => x.Risk <= risks[x.Point])
-                .Select(n => (n, n.Risk));
+                .Where(n => n.Risk < risks[n.Point.Y][n.Point.X]);
 
-            priorityQueue.EnqueueRange(adjacent);
+            foreach (var adj in adjacent) {
+                risks[adj.Point.Y][adj.Point.X] = adj.Risk;
+                priorityQueue.Enqueue(adj, adj.Risk);
+            }
         }
         return null;
     }
-
     static IEnumerable<Point> Adjacent(Point point, int maxX, int maxY) {
         return new [] { 
                 point with {X = point.X - 1, Y = point.Y},
@@ -55,6 +65,33 @@ class Program {
             .ToImmutableArray();
     }
 
+    static ImmutableArray<ImmutableArray<int>> ExpandRiskLevels(ImmutableArray<ImmutableArray<int>> riskLevels) {
+        const int multiplier = 5;
+        var rows = riskLevels.Length;
+        var cols = riskLevels[0].Length;
+        var newRows = rows * multiplier;
+        var newCols = cols * multiplier;
+
+        var newRiskLevels = Enumerable.Range(0, newRows)
+            .Select(r => new int[newCols])
+            .ToArray();
+
+        for (var tileRow = 0; tileRow < multiplier; tileRow++) {
+            for (var tileCol = 0; tileCol < multiplier; tileCol++) {
+                MakeCopy(riskLevels, tileRow * rows, tileCol * cols, tileRow + tileCol, newRiskLevels);
+            }
+        }
+
+        return newRiskLevels.Select(r => r.ToImmutableArray()).ToImmutableArray();
+    }
+
+    static void MakeCopy(ImmutableArray<ImmutableArray<int>> riskLevels, int startRow, int startCol, int toAdd, int[][] newRiskLevels) {
+        for (int r = 0; r < riskLevels.Length; r++) {
+            for (int c = 0; c < riskLevels[0].Length; c++) {
+                newRiskLevels[startRow + r][startCol + c] = ((riskLevels[r][c] - 1 + toAdd) % 9) + 1;
+            }
+        }
+    }
     static ImmutableArray<ImmutableArray<int>> ReadData() {
         return File.ReadLines("input.txt")
             .Select(line => line.Select(c => Convert.ToInt32(c.ToString())).ToImmutableArray())
