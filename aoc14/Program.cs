@@ -11,17 +11,57 @@ class Program {
         var (template, insertionRules) = ReadData();
         Console.WriteLine(template);
 
-        const int numExpansions = 10;
-
         var expansion = template;
-        for (int i = 1; i <= numExpansions; i++) {
+        for (int i = 0; i < 10; i++) {
             expansion = Expand(expansion, insertionRules);
         }
 
-        var frequencies = expansion.GroupBy(x => x).Select(g => g.Count());
-        var mostFrequent = frequencies.Max();
-        var leastFrequent = frequencies.Min();
-        Console.WriteLine($"Most Frequent: {mostFrequent}, Least Frequent: {leastFrequent}, Diff: {mostFrequent - leastFrequent}");
+        var frequencies10 = expansion.GroupBy(x => x).Select(g => g.Count());
+        var mostFrequent10 = frequencies10.Max();
+        var leastFrequent10 = frequencies10.Min();
+        Console.WriteLine($"10 Steps - Most Frequent: {mostFrequent10}, Least Frequent: {leastFrequent10}, Diff: {mostFrequent10 - leastFrequent10}");
+
+        var (pairCounts, letterCounts) = CreateCounts(template, insertionRules, 40);
+        var mostFrequent40 = letterCounts.Values.Max();
+        var leastFrequent40 = letterCounts.Values.Min();
+        Console.WriteLine($"40 Steps - Most Frequent: {mostFrequent40}, Least Frequent: {leastFrequent40}, Diff: {mostFrequent40 - leastFrequent40}");
+    }
+
+    private static (ImmutableDictionary<string, long>, ImmutableDictionary<char, long>) CreateCounts(string template, ImmutableDictionary<string, string> insertionRules, int numExpansions) {
+        var pairs = template.ToObservable()
+            .Buffer(2, 1)
+            .Select(x => string.Join("", x.ToArray()))
+            .Where(x => x.Length == 2)
+            .ToEnumerable().ToImmutableArray();
+
+        var pairCounts = pairs.GroupBy(x => x).ToImmutableDictionary(g => g.Key, g => (long) g.Count());
+        var charCounts = template.GroupBy(c => c).ToImmutableDictionary(g => g.Key, g => (long) g.Count());
+
+        for(var i = 0; i < numExpansions; i++) {
+            (pairCounts, charCounts) = ExpandCounts(pairCounts, charCounts, insertionRules);
+        }
+
+        return (pairCounts, charCounts);
+    }
+
+    private static (ImmutableDictionary<string, long>, ImmutableDictionary<char, long>) ExpandCounts(ImmutableDictionary<string, long> initialCounts, ImmutableDictionary<char, long> initialCharCounts, ImmutableDictionary<string, string> insertionRules) {
+        var newCounts = initialCounts.Aggregate((PairCounts: ImmutableDictionary.Create<string, long>(), CharCounts: initialCharCounts), (d, kvp) => {
+            var c = insertionRules[kvp.Key][0];
+            var newPairs = new [] { $"{kvp.Key[0]}{c}", $"{c}{kvp.Key[1]}"};
+            var (pairCounts, charCounts) = d;
+            foreach(var newPair in newPairs) {
+                if (pairCounts.ContainsKey(newPair)) {
+                    var newValue = pairCounts[newPair] + kvp.Value;
+                    pairCounts = pairCounts.SetItem(newPair, newValue);
+                } else {
+                    pairCounts = pairCounts.SetItem(newPair, kvp.Value);
+                }
+            }
+            var newCharCount = charCounts.GetValueOrDefault(c, 0) + kvp.Value;
+            charCounts = charCounts.SetItem(c, newCharCount);
+            return (pairCounts, charCounts);
+        });
+        return newCounts;
     }
 
     private static string Expand(string s, ImmutableDictionary<string, string> insertionRules) {
