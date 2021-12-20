@@ -16,6 +16,7 @@ class Program {
     }
 
     static Node? FindPath(ImmutableArray<ImmutableArray<int>> riskLevels) {
+        var stopwatch = Stopwatch.StartNew();
         var dest = new Point(riskLevels.Length - 1, riskLevels[0].Length - 1);
 
         var risks = Enumerable.Range(0, riskLevels.Length)
@@ -33,6 +34,7 @@ class Program {
         while (priorityQueue.Count > 0) {
             var node = priorityQueue.Dequeue();
             if (node.Point == dest) {
+                Console.WriteLine($"{stopwatch.Elapsed}");
                 return node;
             }
 
