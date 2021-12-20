@@ -9,14 +9,15 @@ class Program {
         var packet = Parse(hex);
 
         Console.WriteLine(VersionSum(packet));
+        Console.WriteLine(packet.Evaluate());
     }
 
     private static IPacket Parse(string hex) => Parse(new BitEnumerable(hex).GetEnumerator());
 
     private static IPacket Parse(IEnumerator<int> enumerator) {
         const int literalType = 4;
-        var version = ReadInt(enumerator, 3);
-        var typeId = ReadInt(enumerator, 3);
+        var version = (int) ReadLong(enumerator, 3);
+        var typeId = (int) ReadLong(enumerator, 3);
 
         return typeId switch {
             literalType => ParseLiteral(version, typeId, enumerator),
@@ -25,13 +26,13 @@ class Program {
     }
 
     private static LiteralPacket ParseLiteral(int version, int typeId, IEnumerator<int> enumerator) {
-        const int moreDataMask = 1 << 4;
-        const int dataMask = 0x0F;
+        const long moreDataMask = 1 << 4;
+        const long dataMask = 0x0F;
 
-        var value = 0;
+        var value = 0L;
         bool hasMoreData;
         do {
-            var dataChunk = ReadInt(enumerator, 5);
+            var dataChunk = ReadLong(enumerator, 5);
             hasMoreData = (dataChunk & moreDataMask) > 0;
             value = (value << 4) | (dataMask & dataChunk);
         } while (hasMoreData);
@@ -42,10 +43,10 @@ class Program {
     private static OperatorPacket ParseOperator(int version, int typeId, IEnumerator<int> enumerator) {
         const int bitLengthType = 0;
         
-        var lengthType = ReadInt(enumerator, 1);
+        var lengthType = ReadLong(enumerator, 1);
         ImmutableArray<IPacket> subPackets;
         if (lengthType == bitLengthType) {
-            var length = ReadInt(enumerator, 15);
+            var length = ReadLong(enumerator, 15);
             var builder = ImmutableArray.CreateBuilder<int>();
             for (var i = 0; i < length; i++) {
                 enumerator.MoveNext();
@@ -53,7 +54,7 @@ class Program {
             }
             subPackets = ParseToEndOfEnumerator(builder.ToList().GetEnumerator());
         } else {
-            var length = ReadInt(enumerator, 11);
+            var length = ReadLong(enumerator, 11);
             var builder = ImmutableArray.CreateBuilder<IPacket>();
             for (int i = 0; i < length; i++) {
                 builder.Add(Parse(enumerator));
@@ -79,11 +80,11 @@ class Program {
         return builder.ToImmutableArray();
     }
 
-    private static int ReadInt(IEnumerator<int> enumerator, int numBits) {
-        var value = 0;
+    private static long ReadLong(IEnumerator<int> enumerator, int numBits) {
+        var value = 0L;
         for (var i = 0; i < numBits; i++) {
             enumerator.MoveNext();
-            value = (value << 1) | enumerator.Current; 
+            value = (value << 1) | ((long) enumerator.Current); 
         }
         return value;
     }

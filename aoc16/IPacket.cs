@@ -8,4 +8,6 @@ public interface IPacket {
     public int TypeId { get; }
 
     public ImmutableArray<IPacket> Children { get; }
+
+    public long Evaluate();
 }
