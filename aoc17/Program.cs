@@ -19,11 +19,14 @@ class Program {
         var bestVelocity = new Velocity(minVx, minVy);
         var bestTrajectory = ImmutableArray<Point>.Empty;
 
+        var velocitiesThatHitTarget = new HashSet<Velocity>();
+
         for (var vx = minVx; vx < maxVx + 1; vx++) {
             for (var vy = minVy; vy < maxVy + 1; vy++) {
                 var initialVelocity = new Velocity(vx, vy);
                 var (hitTarget, trajectory) = Fire(initialVelocity, targetArea);
                 if (hitTarget) {
+                    velocitiesThatHitTarget.Add(initialVelocity);
                     var maxY = trajectory.Select(p => p.Y).Max();
                     if (maxY > bestY) {
                         bestY = maxY;
@@ -36,6 +39,7 @@ class Program {
 
         PrintBoard(bestTrajectory, targetArea);
         Console.WriteLine($"Best Y: {bestY}, Best Velocity: {bestVelocity}");
+        Console.WriteLine($"Velocities that hit target: {velocitiesThatHitTarget.Count()}");
     }
 
     private static (bool HitTarget, ImmutableArray<Point> Path) Fire(Velocity startingVelocity, TargetArea targetArea) {
