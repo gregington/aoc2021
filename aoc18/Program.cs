@@ -6,10 +6,26 @@ namespace aoc18;
 
 class Program {
     static void Main(string[] args) {
-        var lines = ReadData();
+        var lines = ReadData().ToImmutableArray();
         var init = lines.First();
         var sum = lines.Skip(1).Aggregate(init, (x, y) => Add(x, y));
         Console.WriteLine(Magnitude(sum));
+
+        var mag = Pairs(lines).Select(x => (x.Left, x.Right, Magnitude: Magnitude(Add(x.Left, x.Right))))
+            .MaxBy(x => x.Magnitude);
+        Console.WriteLine(mag);
+    }
+
+    private static IEnumerable<(string Left, string Right)> Pairs(ImmutableArray<string> lines) {
+        for (var i = 0; i < lines.Length; i++) {
+            for (var j = 0; j < lines.Length; j++) {
+                if (i == j) {
+                    continue;
+                }
+                yield return (lines[i], lines[j]);
+                yield return (lines[j], lines[i]);
+            }
+        }
     }
 
     private static string Add(string left, string right) {
