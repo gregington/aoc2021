@@ -5,27 +5,26 @@ namespace aoc20;
 
 class Program {
     static void Main(string[] args) {
-        var (algorithm, image) = ReadData();
-        var numIters = 2;
-        image = Expand(image, numIters * 2);
+        var (algorithm, originalImage) = ReadData();
 
-        PrintImage(image);
-        for (var i = 0; i < numIters; i++) {
-            image = Enhance(image, algorithm);
-            PrintImage(image);
-        }
+        var image2Iters = Enhance(originalImage, algorithm, 2);
+        var numLitPixels2 = image2Iters.SelectMany(x => x).Where(x => x == 1).Count();
+        Console.WriteLine($"Num lit pixels, 2 iters: {numLitPixels2}");
 
-        image = Reduce(image, numIters);
-        PrintImage(image);
 
-        var numLitPixels = image.SelectMany(x => x).Where(x => x == 1).Count();
-        Console.WriteLine($"Num lit pixels: {numLitPixels}");
+        var image50Iters = Enhance(originalImage, algorithm, 50);
+        var numLitPixels50 = image50Iters.SelectMany(x => x).Where(x => x == 1).Count();
+        Console.WriteLine($"Num lit pixels, 50 iters: {numLitPixels50}");
+
     }
 
-    private static ImmutableArray<ImmutableArray<int>> Enhance(ImmutableArray<ImmutableArray<int>> image, ImmutableArray<int> algorithm) {
-        //image = Expand2(image);
-        image = Convolve(image, algorithm);
-        return image;
+    private static ImmutableArray<ImmutableArray<int>> Enhance(ImmutableArray<ImmutableArray<int>> image, ImmutableArray<int> algorithm, int numIters) {
+        image = Expand(image, numIters * 2);
+        for (var i = 0; i < numIters; i++) {
+            image = Convolve(image, algorithm);
+        }
+        
+        return Reduce(image, numIters);
     }
 
     private static ImmutableArray<ImmutableArray<int>> Convolve(ImmutableArray<ImmutableArray<int>> image, ImmutableArray<int> algorithm) {
