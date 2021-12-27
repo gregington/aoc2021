@@ -45,7 +45,7 @@ public readonly record struct Board(string Hallway, string Room0, string Room1, 
             .Zip(Hallway, (a, b) => (FromIndex: a, Amphipod: b))
             .Where(x => x.Amphipod != '.')
             .Select(x => (x.FromIndex, ToIndex: TargetHallwayIndices[x.Amphipod], x.Amphipod, Room: self.RoomForAmphipod(x.Amphipod)))
-            .Where(x => HasRoom(x.Room))
+            .Where(x => x.Room.All(c => c == '.' || c == x.Amphipod))
             .Where(x => self.HasClearPath(x.FromIndex, x.ToIndex))
             .Select(x => (x.FromIndex, HallwayDistance: Math.Abs(x.FromIndex - x.ToIndex), RoomDistance: x.Room.LastIndexOf('.') + 1, x.Amphipod))
             .Select(x => (x.FromIndex, Cost: (x.HallwayDistance + x.RoomDistance) * CostPerMove[x.Amphipod]))
@@ -140,8 +140,6 @@ public readonly record struct Board(string Hallway, string Room0, string Room1, 
 
         return substr.All(c => c == '.');
     }
-    private static bool HasRoom(string room) => room.Contains('.');
-
     public override string ToString() {
         var sb = new StringBuilder();
         
