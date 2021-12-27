@@ -19,6 +19,19 @@ public readonly record struct Region(int XMin, int XMax, int YMin, int YMax, int
         );
     }
 
+    public Region? Intersect(Region other) {
+        if (!Contains(other)) {
+            return null;
+        }
+        return new Region(
+            Math.Max(XMin, other.XMin),
+            Math.Min(XMax, other.XMax),
+            Math.Max(YMin, other.YMin),
+            Math.Min(YMax, other.YMax),
+            Math.Max(ZMin, other.ZMin),
+            Math.Min(ZMax, other.ZMax));
+    }
+
     public IEnumerable<Cube> Cubes() {
         for (var i = XMin; i <= XMax; i++) {
             for (var j = YMin; j <= YMax; j++) {
@@ -27,5 +40,9 @@ public readonly record struct Region(int XMin, int XMax, int YMin, int YMax, int
                 }
             }
         }
+    }
+
+    public ulong Volume() {
+        return ((ulong) XMax - (ulong) XMin + 1) * ((ulong) YMax - (ulong) YMin + 1) * ((ulong) ZMax - (ulong) ZMin + 1);
     }
 }
