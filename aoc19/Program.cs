@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Text.RegularExpressions;
+using MathNet.Numerics;
 using MathNet.Numerics.LinearAlgebra;
 
 namespace aoc19;
@@ -11,12 +12,18 @@ class Program {
 
     static void Main(string[] args) {
         var scanners = ReadData();
-        var numBeacons = LocateScanners(scanners)
-            .SelectMany(s => s.GetBeaconsInWorld())
+        var locatedScanners = LocateScanners(scanners);
+        var beacons = locatedScanners.SelectMany(s => s.GetBeaconsInWorld())
             .Distinct()
-            .Count();
+            .ToImmutableArray();
+        var numBeacons = beacons.Count();
 
-        Console.WriteLine(numBeacons);
+        Console.WriteLine($"Num beacons: {numBeacons}");
+
+        var maxManhattanDistance = locatedScanners.SelectMany(a => locatedScanners.Select(b => Distance.Manhattan(a.Centre, b.Centre)))
+            .Max();
+
+        Console.WriteLine($"Max manhattan distance: {maxManhattanDistance}");
     }
 
     private static ImmutableHashSet<Scanner> LocateScanners(IEnumerable<Scanner> input) {
