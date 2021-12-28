@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 
 namespace aoc24;
 
+// Really had no idea with this one. Solution from lots of Reddit comments.
 class Program {
     static void Main(string[] args) {
         var constants = ReadData();
